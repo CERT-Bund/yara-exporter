@@ -1,0 +1,4 @@
+progressbar2
+pymisp
+yara-python
+sphinx_rtd_theme
