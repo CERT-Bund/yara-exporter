@@ -77,8 +77,12 @@ import re
 import progressbar
 import pymisp
 import yara
-
-from typing import Union
+try:
+    from typing import Union
+    HAS_TYPING = True
+except ImportError:
+    # No support for typing (https://docs.python.org/3/library/typing.html)
+    HAS_TYPING = False
 
 _AVAILABLETYPES = ['regkey', 'regkey|value', 'pattern-in-file', 'mutex']
 
@@ -117,17 +121,31 @@ class Yaraexporter:
     :param debug: If set to true, it can be used for locating errors.
     :param ignore: Comma separated list of MISP eventIds to ignore."""
 
-    def __init__(self, url: str, key: str, ssl: Union[bool, str]=True, debug: bool=False,
-                 ignore: Union[str, None]=None):
-        if ssl and not os.path.isfile(ssl):
-            ssl = True
-        self.debug = debug
-        self._debug('Connecting to {}.'.format(url))
-        self.misp = pymisp.PyMISP(url=url, key=key, ssl=ssl)
-        if ignore:
-            self.ignore = ignore.split(',')
-        else:
-            self.ignore = None
+    if HAS_TYPING:
+        def __init__(self, url: str, key: str, ssl: Union[bool, str]=True, debug: bool=False,
+                     ignore: Union[str, None]=None):
+            if ssl and not os.path.isfile(ssl):
+                ssl = True
+            self.debug = debug
+            self._debug('Connecting to {}.'.format(url))
+            self.misp = pymisp.PyMISP(url=url, key=key, ssl=ssl)
+            if ignore:
+                self.ignore = ignore.split(',')
+            else:
+                self.ignore = None
+    else:
+        def __init__(self, url: str, key: str, ssl=True, debug: bool=False, ignore=None):
+            # Python <= 3.5 doesn support typing.Union. This method will be removed
+            # when we stop supporting python 3.4
+            if ssl and not os.path.isfile(ssl):
+                ssl = True
+            self.debug = debug
+            self._debug('Connecting to {}.'.format(url))
+            self.misp = pymisp.PyMISP(url=url, key=key, ssl=ssl)
+            if ignore:
+                self.ignore = ignore.split(',')
+            else:
+                self.ignore = None
 
     def __enter__(self):
         """Needed for 'with'"""
